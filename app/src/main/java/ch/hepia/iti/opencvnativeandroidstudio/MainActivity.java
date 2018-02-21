@@ -112,11 +112,20 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     }
 
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
-        Mat matGray = inputFrame.gray();
-        salt(matGray.getNativeObjAddr(), 2000);
-        return matGray;
+        Mat matGray = inputFrame.rgba();
+        Mat matSharpen = new Mat(matGray.rows(), matGray.cols(), matGray.type());
+        sharpen(matGray.getNativeObjAddr(), matSharpen.getNativeObjAddr());
+        /*for (int row = 0; row < matGray.rows(); row++) {
+            for (int column = 0; column < matGray.cols(); column++) {
+                matGray.put(row, column, (matGray.get(row, column)[0] > 127) ? 0 : 255);
+            }
+        }
+        salt(matGray.getNativeObjAddr(), 2000);*/
+        return matSharpen;
     }
 
     public native void salt(long matAddrGray, int nbrElem);
+    public native void reduce(long reduce, int n);
+    public native void sharpen(long base, long sharpen);
 }
 
