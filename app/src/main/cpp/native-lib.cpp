@@ -47,6 +47,7 @@ extern "C"
         }
 
     }
+
     void JNICALL Java_ch_hepia_iti_opencvnativeandroidstudio_MainActivity_sharpen(JNIEnv *env, jobject instance,
                                                                                  jlong matAddrGray,
                                                                                  jlong matResult) {
@@ -69,5 +70,35 @@ extern "C"
                 newCurrent[j] = saturate_cast<uchar>(5*current[j] - current[j-channels] - current[j+channels] - previous[j] - next[j]);
             }
         }
+    }
+
+    void JNICALL Java_ch_hepia_iti_opencvnativeandroidstudio_MainActivity_median(JNIEnv *env, jobject instance,
+                                                                                  jlong matAddrGray,
+                                                                                  jlong matResult) {
+        Mat &I = *(Mat *) matAddrGray;
+        Mat &J = *(Mat *) matResult;
+        Mat kernel = Mat::ones( 15, 15, CV_32F )/ (float)(15*15);
+        filter2D(I, J, -1, kernel);
+    }
+
+    void JNICALL Java_ch_hepia_iti_opencvnativeandroidstudio_MainActivity_laplacien(JNIEnv *env, jobject instance,
+                                                                                 jlong matAddrGray,
+                                                                                 jlong matResult) {
+        Mat &I = *(Mat *) matAddrGray;
+        Mat &J = *(Mat *) matResult;
+        Mat kernel = Mat::ones( 3, 3, CV_32F );
+        for (int i = 0; i < 3; ++i) {
+            for (int j = 0; j < 3; ++j) {
+                kernel.at<uchar>(i, j) = (i == 1 && j == 1) ? 8 : -1;
+            }
+        }
+        filter2D(I, J, -1, kernel);
+
+    }
+
+    void JNICALL Java_ch_hepia_iti_opencvnativeandroidstudio_MainActivity_binary(JNIEnv *env, jobject instance,
+                                                                                    jlong matAddrGray,
+                                                                                    jlong matResult) {
+
     }
 }

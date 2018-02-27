@@ -14,6 +14,9 @@ import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.core.Mat;
+import org.opencv.imgproc.Imgproc;
+
+import static org.opencv.core.CvType.CV_32F;
 
 public class MainActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2 {
 
@@ -112,20 +115,37 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     }
 
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
-        Mat matGray = inputFrame.rgba();
-        Mat matSharpen = new Mat(matGray.rows(), matGray.cols(), matGray.type());
-        sharpen(matGray.getNativeObjAddr(), matSharpen.getNativeObjAddr());
-        /*for (int row = 0; row < matGray.rows(); row++) {
-            for (int column = 0; column < matGray.cols(); column++) {
-                matGray.put(row, column, (matGray.get(row, column)[0] > 127) ? 0 : 255);
+        Mat base = inputFrame.gray();
+        Mat result = new Mat(base.rows(), base.cols(), base.type());
+        Mat kernel = new Mat(3, 3, CV_32F);
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                kernel.put(i, j, 1f / (3*3));
             }
         }
-        salt(matGray.getNativeObjAddr(), 2000);*/
-        return matSharpen;
+        //blur
+        Imgproc.filter2D(base, result, -1, kernel);
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                kernel.put(i, j, (i == 1 && j == 1) ? 8 : -1);
+            }
+        }
+        //laplacien
+        Imgproc.filter2D(result, base, -1, kernel);
+        /*for (int row = 0; row < base.rows(); row++) {
+            for (int column = 0; column < base.cols(); column++) {
+                base.put(row, column, (base.get(row, column)[0] > 127) ? 0 : 255);
+            }
+        }
+        salt(base.getNativeObjAddr(), 2000);*/
+        return base;
     }
 
     public native void salt(long matAddrGray, int nbrElem);
     public native void reduce(long reduce, int n);
-    public native void sharpen(long base, long sharpen);
+    public native void sharpen(long base, long result);
+    public native void median(long base, long result);
+    public native void laplacien(long base, long result);
+    public native void binary(long base, long result);
 }
 
