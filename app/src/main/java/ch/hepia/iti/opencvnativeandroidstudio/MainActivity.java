@@ -6,7 +6,9 @@ import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.SurfaceView;
+import android.view.View;
 import android.view.WindowManager;
 import android.widget.Toast;
 import org.opencv.android.BaseLoaderCallback;
@@ -22,6 +24,13 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
     private static final String TAG = "OCVSample::Activity";
     private CameraBridgeViewBase _cameraBridgeViewBase;
+    private int step = 0;
+    private float scaledColumns;
+    private float scaledRows;
+    private float rows = -1;
+    private float columns;
+    private float border;
+    private Mat save;
 
     private BaseLoaderCallback _baseLoaderCallback = new BaseLoaderCallback(this) {
         @Override
@@ -57,6 +66,21 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         _cameraBridgeViewBase = (CameraBridgeViewBase) findViewById(R.id.main_surface);
         _cameraBridgeViewBase.setVisibility(SurfaceView.VISIBLE);
         _cameraBridgeViewBase.setCvCameraViewListener(this);
+        _cameraBridgeViewBase.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                step = (step + 1) % 4;
+            }
+        });
+
+        _cameraBridgeViewBase.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                int x = (int) ((event.getX() - border) / scaledColumns * columns);
+                int y = (int) (event.getY() / scaledRows * rows);
+                return false;
+            }
+        });
     }
 
     @Override
@@ -115,30 +139,52 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     }
 
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
+        System.out.println(step);
+        if(step == 3){
+            return save;
+        }
         Mat base = inputFrame.gray();
+        if(rows == -1){
+            scaledColumns = 1f * base.cols() / base.rows() * _cameraBridgeViewBase.getHeight();
+            scaledRows = _cameraBridgeViewBase.getHeight();
+            rows = base.rows();
+            columns = base.cols();
+            border = (_cameraBridgeViewBase.getWidth() - scaledColumns)/2;
+        }
+
         Mat result = new Mat(base.rows(), base.cols(), base.type());
         Mat kernel = new Mat(3, 3, CV_32F);
+        //blur
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
                 kernel.put(i, j, 1f / (3*3));
             }
         }
-        //blur
         Imgproc.filter2D(base, result, -1, kernel);
+        if(step == 0){
+            return result;
+        }
+        //laplacien
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
                 kernel.put(i, j, (i == 1 && j == 1) ? 8 : -1);
             }
         }
-        //laplacien
         Imgproc.filter2D(result, base, -1, kernel);
+        if(step == 1){
+            return base;
+        }
+        //binary
+        Imgproc.threshold(base, result, 32, 255, 1);
+
         /*for (int row = 0; row < base.rows(); row++) {
             for (int column = 0; column < base.cols(); column++) {
                 base.put(row, column, (base.get(row, column)[0] > 127) ? 0 : 255);
             }
         }
         salt(base.getNativeObjAddr(), 2000);*/
-        return base;
+        save = result;
+        return result;
     }
 
     public native void salt(long matAddrGray, int nbrElem);
