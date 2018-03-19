@@ -10,12 +10,14 @@ import android.view.MotionEvent;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.SeekBar;
 import android.widget.Toast;
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.core.Mat;
+import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
 import static org.opencv.core.CvType.CV_32F;
@@ -31,6 +33,12 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     private float columns;
     private float border;
     private Mat save;
+    SeekBar a;
+    SeekBar b;
+    SeekBar c;
+    SeekBar amin;
+    SeekBar bmin;
+    SeekBar cmin;
 
     private BaseLoaderCallback _baseLoaderCallback = new BaseLoaderCallback(this) {
         @Override
@@ -81,6 +89,22 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                 return false;
             }
         });
+        a = findViewById(R.id.a);
+        b = findViewById(R.id.b);
+        c = findViewById(R.id.c);
+        amin = findViewById(R.id.amin);
+        bmin = findViewById(R.id.bmin);
+        cmin = findViewById(R.id.cmin);
+        a.setMax(179);
+        amin.setMax(179);
+        b.setMax(255);
+        bmin.setMax(255);
+        c.setMax(255);
+        cmin.setMax(255);
+        /*a.setMax(100);
+        b.setMax(300);
+        a.setProgress(100);
+        b.setProgress(300);*/
     }
 
     @Override
@@ -139,6 +163,14 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     }
 
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
+        Mat base = inputFrame.rgba();
+        //Mat result = new Mat(base.rows(), base.cols(), base.type());
+        red(base.getNativeObjAddr(), amin.getProgress(), bmin.getProgress(), cmin.getProgress(),
+                a.getProgress(), b.getProgress(), c.getProgress());
+        return base;
+    }
+
+    public Mat filters(CameraBridgeViewBase.CvCameraViewFrame inputFrame){
         System.out.println(step);
         if(step == 3){
             return save;
@@ -193,5 +225,9 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     public native void median(long base, long result);
     public native void laplacien(long base, long result);
     public native void binary(long base, long result);
+    public native void canny(long base, long result, int a, int b);
+    public native void houghLinesP(long base, long result);
+    public native void houghCircle(long base);
+    public native void red(long base, int amin, int bmin, int cmin, int a, int b, int c);
 }
 

@@ -102,3 +102,78 @@ extern "C"
 
     }
 }
+extern "C"
+JNIEXPORT void JNICALL
+Java_ch_hepia_iti_opencvnativeandroidstudio_MainActivity_canny(JNIEnv *env, jobject instance,
+                                                               jlong base, jlong result, jint a, jint b) {
+
+    Mat &src_gray = *(Mat *) base;
+    Mat &detected_edges = *(Mat *) result;
+    /// Reduce noise with a kernel 3x3
+    blur( src_gray, detected_edges, Size(3,3) );
+
+    /// Canny detector
+    Canny( detected_edges, detected_edges, a, b);
+
+    /// Using Canny's output as a mask, we display our result
+    Mat dst;
+    dst = Scalar::all(0);
+    src_gray.copyTo( dst, detected_edges);
+
+}
+
+extern "C"
+ JNIEXPORT void JNICALL
+ Java_ch_hepia_iti_opencvnativeandroidstudio_MainActivity_houghLinesP(JNIEnv *env, jobject instance,
+                                                                      jlong base, jlong result) {
+     Mat &dst = *(Mat *) base;
+     Mat &r = *(Mat *) result;
+     Mat color_dst;
+     cvtColor( dst, color_dst, CV_GRAY2BGR );
+     vector<Vec4i> lines;
+     HoughLinesP(dst, lines, 1, CV_PI/180, 50, 50, 10 );
+     for( size_t i = 0; i < lines.size(); i++ )
+     {
+         Vec4i l = lines[i];
+         line( color_dst, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(0,0,255), 3, CV_AA);
+     }
+    r = Scalar::all(0);
+     color_dst.copyTo(r);
+
+ }extern "C"
+ JNIEXPORT void JNICALL
+ Java_ch_hepia_iti_opencvnativeandroidstudio_MainActivity_houghCircle(JNIEnv *env, jobject instance,
+                                                                      jlong base) {
+     Mat &src = *(Mat *) base;
+
+     /// Reduce the noise so we avoid false circle detection
+     //GaussianBlur( src_gray, src_gray, Size(9, 9), 2, 2 );
+
+     vector<Vec3f> circles;
+
+     /// Apply the Hough Transform to find the circles
+     HoughCircles( src, circles, CV_HOUGH_GRADIENT, 1, src.rows/8, 200, 100, 0, 0 );
+
+     /// Draw the circles detected
+     for( size_t i = 0; i < circles.size(); i++ )
+     {
+         Point center(cvRound(circles[i][0]), cvRound(circles[i][1]));
+         int radius = cvRound(circles[i][2]);
+         // circle center
+         circle( src, center, 3, Scalar(0,255,0), -1, 8, 0 );
+         // circle outline
+         circle( src, center, radius, Scalar(0,0,255), 3, 8, 0 );
+     }
+ }extern "C"
+ JNIEXPORT void JNICALL
+ Java_ch_hepia_iti_opencvnativeandroidstudio_MainActivity_red(JNIEnv *env, jobject instance,
+                                                              jlong base,
+                                                              jint amin, jint bmin, jint cmin,
+                                                              jint a, jint b, jint c) {
+     Mat &src = *(Mat *) base;
+     Mat frame;
+     cvtColor(src, src,CV_RGB2HSV);
+     inRange(src, Scalar(amin, bmin, cmin), Scalar(a, b, c), src);
+     //frame.copyTo(src);
+     //cvtColor(src, src,CV_HSV2RGB);
+ }
