@@ -163,10 +163,8 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     }
 
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
-        Mat base = inputFrame.rgba();
-        //Mat result = new Mat(base.rows(), base.cols(), base.type());
-        red(base.getNativeObjAddr(), amin.getProgress(), bmin.getProgress(), cmin.getProgress(),
-                a.getProgress(), b.getProgress(), c.getProgress());
+        Mat base = inputFrame.gray();
+        face(base.getNativeObjAddr());
         return base;
     }
 
@@ -229,5 +227,6 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     public native void houghLinesP(long base, long result);
     public native void houghCircle(long base);
     public native void red(long base, int amin, int bmin, int cmin, int a, int b, int c);
+    public native void face(long base);
 }
 

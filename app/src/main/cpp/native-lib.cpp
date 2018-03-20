@@ -3,6 +3,7 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/features2d/features2d.hpp>
+#include <opencv2/objdetect.hpp>
 
 using namespace std;
 using namespace cv;
@@ -140,7 +141,9 @@ extern "C"
     r = Scalar::all(0);
      color_dst.copyTo(r);
 
- }extern "C"
+ }
+
+extern "C"
  JNIEXPORT void JNICALL
  Java_ch_hepia_iti_opencvnativeandroidstudio_MainActivity_houghCircle(JNIEnv *env, jobject instance,
                                                                       jlong base) {
@@ -164,7 +167,9 @@ extern "C"
          // circle outline
          circle( src, center, radius, Scalar(0,0,255), 3, 8, 0 );
      }
- }extern "C"
+ }
+
+extern "C"
  JNIEXPORT void JNICALL
  Java_ch_hepia_iti_opencvnativeandroidstudio_MainActivity_red(JNIEnv *env, jobject instance,
                                                               jlong base,
@@ -176,4 +181,21 @@ extern "C"
      inRange(src, Scalar(amin, bmin, cmin), Scalar(a, b, c), src);
      //frame.copyTo(src);
      //cvtColor(src, src,CV_HSV2RGB);
+ }
+
+extern "C"
+ JNIEXPORT void JNICALL
+ Java_ch_hepia_iti_opencvnativeandroidstudio_MainActivity_face(JNIEnv *env, jobject instance,
+                                                               jlong base) {
+     Mat &src = *(Mat *) base;
+     CascadeClassifier classifier("/sdcard/haarcascade_frontalface_alt2.xml");
+
+     std::vector<Rect> faces;
+     equalizeHist( src, src);
+     classifier.detectMultiScale(src, faces, 1.1, 3, CV_HAAR_SCALE_IMAGE);
+     for( size_t i = 0; i < faces.size(); i++ )
+     {
+         Point center( faces[i].x + faces[i].width*0.5, faces[i].y + faces[i].height*0.5 );
+         ellipse( src, center, Size( faces[i].width*0.5, faces[i].height*0.5), 0, 0, 360, Scalar( 255, 0, 255 ), 4, 8, 0 );
+     }
  }
